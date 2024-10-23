@@ -1,5 +1,6 @@
-import React, {useMemo} from "react";
+import React,{useMemo} from "react";
 import styled from "styled-components";
+import { useTransactions } from "./TransactionContext";
 
 const Container = styled.div`
     padding: 1rem;
@@ -14,7 +15,8 @@ const SummaryContainer = styled.div`
     border: 1px solid black;
 `
 
-const SummaryWidget = ({bankTransactions, invoiceData}) =>{
+const SummaryWidget = ({invoiceData}) =>{
+    const {bankTransactions} = useTransactions();
 
     const threshold = 1000;
 

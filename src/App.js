@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import SummaryWidget from "./components/SummaryWidget";
-import { fetchInvoices, fetchTransactions } from "./components/mockData";
+import { fetchInvoices } from "./components/mockData";
 import InvoiceWidget from "./components/InvoiceWidget";
+import { TransactionProvider } from "./components/TransactionContext";
 
 const loadFromLocalStorage = (key) => {
   const data = localStorage.getItem(key);
@@ -9,33 +10,9 @@ const loadFromLocalStorage = (key) => {
 };
 
 function App() {
-  const [bankTransactions, setBankTransactions] = useState([]);
   const [invoiceData, setInvoiceData] = useState([]);
-
-  const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
-  
-  const [transactionsError, setTransactionsError] = useState(null);
   const [invoicesError, setInvoicesError] = useState(null);
-
-  useEffect(()=>{
-    setLoadingTransactions(true);
-    setTransactionsError(null);
-
-    fetchTransactions().then(res=>{
-      if(res.length === 0){
-          throw new Error("No Transactions found")
-      }
-      setBankTransactions(res);
-    }
-    )
-    .catch((error)=>{
-      setTransactionsError(`Failed to load bank transactions : ${error.message}`);
-    })
-    .finally(()=>{
-      setLoadingTransactions(false)
-    })
-  },[])
 
   useEffect(() => {
     setLoadingInvoices(true);
@@ -75,12 +52,8 @@ function App() {
   }
 
 
-  if (loadingTransactions || loadingInvoices) {
+  if (loadingInvoices) {
     return <div>Loading data...</div>;
-  }
-
-  if (transactionsError) {
-    return <div>Error: {transactionsError}</div>;
   }
 
   if (invoicesError) {
@@ -88,10 +61,10 @@ function App() {
   }
 
   return (
-    <div>
-      <SummaryWidget bankTransactions={bankTransactions} invoiceData={invoiceData}/>
-      <InvoiceWidget invoiceData={invoiceData} transactions={bankTransactions} onAddInvoice={handleAddInvoice} onUpdateInvoice={handleOnUpdateInvoice}/>
-    </div>
+    <TransactionProvider>
+      <SummaryWidget invoiceData={invoiceData} />
+      <InvoiceWidget invoiceData={invoiceData} onAddInvoice={handleAddInvoice} onUpdateInvoice={handleOnUpdateInvoice} />
+  </TransactionProvider>
   );
 }
 

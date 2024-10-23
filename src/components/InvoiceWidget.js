@@ -1,8 +1,17 @@
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useState, useEffect } from "react"
 import styled from "styled-components";
+import InputField from "./InputField";
+import { useTransactions } from "./TransactionContext";
 
 const Container = styled.div`
     padding: 1rem;
+`
+
+const AddContainer = styled.div`
+    display:flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
 `
 
 const InvoiceContainer = styled.div`
@@ -14,22 +23,24 @@ const InvoiceContainer = styled.div`
     border: 1px solid black;
 `
 
-const InvoiceInput = styled.input`
-    padding: 0.5rem;
-    margin-right: 0.5rem;
-`
-
 const InvoiceButton = styled.button`
     padding: 0.5rem;
     border-radius: 5px;
 `
 
-const InvoiceWidget = ({invoiceData, transactions, onAddInvoice, onUpdateInvoice}) =>{
-    const [invoices, setInvoices] = useState(invoiceData);
-    const [newInvoice, setNewInvoice] = useState({})
+const InvoiceWidget = ({invoiceData, onAddInvoice, onUpdateInvoice}) =>{
+    const [invoices, setInvoices] = useState([]);
+    const [newInvoice, setNewInvoice] = useState({});
+    const { bankTransactions } = useTransactions();
+
+    useEffect(()=>{
+        if(invoiceData.length>0){
+            setInvoices(invoiceData);
+        }
+    },[invoiceData]);
 
     const calcStatus = useCallback((invoice) =>{
-        const matchingTransaction = transactions.find((transaction)=>{
+        const matchingTransaction = bankTransactions.find((transaction)=>{
             return (
                 transaction.reference_number === invoice.reference_number &&
                 parseFloat(transaction.monetary_amount) === parseFloat(invoice.monetary_amount) &&
@@ -37,16 +48,7 @@ const InvoiceWidget = ({invoiceData, transactions, onAddInvoice, onUpdateInvoice
             );
         });
         return matchingTransaction ? "PAID" : "NOT PAID";
-    },[transactions]);
-
-    useEffect(()=>{
-
-        const updatedInvoices = invoiceData.map((invoice)=>({
-            ...invoice,
-            status: calcStatus(invoice),
-        }));
-        setInvoices(updatedInvoices);
-    },[invoiceData,calcStatus]);
+    },[bankTransactions]);
 
     const handleNewInvoiceChange = (e) =>{
         const {name, value} = e.target;
@@ -87,63 +89,73 @@ const InvoiceWidget = ({invoiceData, transactions, onAddInvoice, onUpdateInvoice
             <div>
             {invoices.map((invoice, index)=>(
                 <InvoiceContainer key={invoice.reference_number}>
-                    <InvoiceInput
+                    <InputField
+                        label="Client Name"
                         type="text"
                         name="client_name"
                         value={invoice.client_name}
                         onChange={(e) => handleInvoiceChange(e, index)}
                     />
-                    <InvoiceInput
-                    type="date"
-                    name="creation_date"
-                    value={formatDateForInput(invoice.creation_date)}
-                    onChange={(e) => handleInvoiceChange(e, index)}
+                    <InputField
+                        label="Creation Date"
+                        type="date"
+                        name="creation_date"
+                        value={formatDateForInput(invoice.creation_date)}
+                        onChange={(e) => handleInvoiceChange(e, index)}
                     />
-                    <InvoiceInput
-                    type="text"
-                    name="reference_number"
-                    value={invoice.reference_number}
-                    onChange={(e) => handleInvoiceChange(e, index)}
+                    <InputField
+                        label="Reference Number" 
+                        type="text"
+                        name="reference_number"
+                        value={invoice.reference_number}
+                        onChange={(e) => handleInvoiceChange(e, index)}
                     />
-                    <InvoiceInput
-                    type="number"
-                    name="monetary_amount"
-                    value={invoice.monetary_amount}
-                    onChange={(e) => handleInvoiceChange(e, index)}
+                    <InputField
+                        label="Monetary Amount"
+                        type="number"
+                        name="monetary_amount"
+                        value={invoice.monetary_amount}
+                        onChange={(e) => handleInvoiceChange(e, index)}
                     />
-                    <p>Status: {invoice.status}</p>
+                    <p>Status: {calcStatus(invoice)}</p>
             </InvoiceContainer>
             ))}
             </div>
             <h3>Add new Invoice</h3>
-            <InvoiceInput
-                type="text"
-                name="client_name"
-                placeholder="Client Name"
-                value={newInvoice.client_name || ""}
-                onChange={handleNewInvoiceChange}
-            />
-             <InvoiceInput
-                type="date"
-                name="creation_date"
-                value={newInvoice.creation_date|| ""}
-                onChange={handleNewInvoiceChange}
-            />
-            <InvoiceInput
-                type="text"
-                name="reference_number"
-                placeholder="Reference Number"
-                value={newInvoice.reference_number || ""}
-                onChange={handleNewInvoiceChange}
-            />
-              <InvoiceInput
-                type="number"
-                name="monetary_amount"
-                placeholder="Amount"
-                value={newInvoice.monetary_amount || ""}
-                onChange={handleNewInvoiceChange}
-            />
-            <InvoiceButton onClick={addNewInvoice}>Add Invoice</InvoiceButton>
+            <AddContainer>
+                <InputField
+                    label="Client Name"
+                    type="text"
+                    name="client_name"
+                    placeholder="Client Name"
+                    value={newInvoice.client_name || ""}
+                    onChange={handleNewInvoiceChange}
+                />
+                <InputField    
+                    label="Creation Date"
+                    type="date"
+                    name="creation_date"
+                    value={newInvoice.creation_date|| ""}
+                    onChange={handleNewInvoiceChange}
+                />
+                <InputField
+                    label="Reference Number"
+                    type="text"
+                    name="reference_number"
+                    placeholder="Reference Number"
+                    value={newInvoice.reference_number || ""}
+                    onChange={handleNewInvoiceChange}
+                />
+                <InputField
+                    label="Monetary Amount"
+                    type="number"
+                    name="monetary_amount"
+                    placeholder="Amount"
+                    value={newInvoice.monetary_amount || ""}
+                    onChange={handleNewInvoiceChange}
+                />
+                <InvoiceButton onClick={addNewInvoice}>Add Invoice</InvoiceButton>
+            </AddContainer>
         </Container>
     )
 }
